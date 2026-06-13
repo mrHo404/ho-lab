@@ -1,0 +1,34 @@
+---
+- name: Skip if no servers defined
+  ansible.builtin.meta: end_host
+  when: minecraft_servers | default([]) | length == 0
+
+- name: Create Minecraft base directory
+  ansible.builtin.file:
+    path: "{{ minecraft.base_path }}"
+    state: directory
+    owner: "{{ ho_lab_uid }}"
+    group: "{{ ho_lab_gid }}"
+    mode: "0755"
+
+- name: Create Minecraft compose root
+  ansible.builtin.file:
+    path: "{{ ho_lab_compose_root }}/minecraft"
+    state: directory
+    owner: "{{ ho_lab_uid }}"
+    group: "{{ ho_lab_gid }}"
+    mode: "0755"
+
+- name: Deploy each enabled Minecraft server
+  ansible.builtin.include_tasks: deploy_server.yml
+  loop: "{{ minecraft_servers | selectattr('enabled', 'defined') | selectattr('enabled') | list }}"
+  loop_control:
+    loop_var: server
+    label: "{{ server.name }}"
+
+- name: Display Minecraft server addresses
+  ansible.builtin.debug:
+    msg: "Minecraft {{ item.name }}: {{ ansible_host }}:{{ item.port }} ({{ item.type }})"
+  loop: "{{ minecraft_servers | selectattr('enabled', 'defined') | selectattr('enabled') | list }}"
+  loop_control:
+    label: "{{ item.name }}"

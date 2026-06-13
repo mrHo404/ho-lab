@@ -37,6 +37,10 @@
       when: services.monitoring | default(false)
       tags: [monitoring]
 
+    - role: minecraft
+      when: services.minecraft | default(false)
+      tags: [minecraft, gaming]
+
   post_tasks:
     - name: Display service URLs
       ansible.builtin.debug:
@@ -47,3 +51,4 @@
           - "qBittorrent:  http://{{ ansible_host }}:{{ gluetun.qbittorrent_webui_port }}"
           - "Uptime Kuma:  http://{{ ansible_host }}:{{ monitoring.uptime_kuma_port }}"
           - "Grafana:      http://{{ ansible_host }}:{{ monitoring.grafana_port }}"
+          - "Minecraft:    see playbooks/stack-gaming.yml output"

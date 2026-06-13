@@ -20,6 +20,7 @@ zfs_drives: []  # e.g. ["/dev/sdb", "/dev/sdc", "/dev/sdd", "/dev/sde"]
 zfs_media_path: "/{{ zfs_pool_name }}/media"
 zfs_photos_path: "/{{ zfs_pool_name }}/photos"
 zfs_downloads_path: "/{{ zfs_pool_name }}/downloads"
+zfs_minecraft_path: "/{{ zfs_pool_name }}/minecraft"
 
 # --- Container image pins ---
 images:
@@ -36,6 +37,7 @@ images:
   grafana: "grafana/grafana:11.5.2"
   node_exporter: "prom/node-exporter:v1.9.0"
   cadvisor: "gcr.io/cadvisor/cadvisor:v0.51.0"
+  minecraft: "itzg/minecraft-server:java21"
 
 # --- Feature flags ---
 services:
@@ -44,6 +46,7 @@ services:
   immich: true
   gluetun_qbittorrent: true
   monitoring: true
+  minecraft: false  # enable when ready — see docs/MINECRAFT.md
 
 # --- Pi-hole ---
 pihole:
@@ -86,6 +89,53 @@ monitoring:
   uptime_kuma_port: 3001
   cadvisor_port: 8081
   retention: 30d
+
+# --- Minecraft ---
+# See docs/MINECRAFT.md for mod loader guide and RAM budgeting
+minecraft:
+  base_path: "{{ zfs_minecraft_path }}"
+
+# Define one or more servers; set enabled: true to deploy
+minecraft_servers:
+  - name: survival
+    enabled: false
+    port: 25565
+    type: PAPER           # VANILLA | PAPER | FABRIC | NEOFORGE | FORGE
+    version: LATEST
+    memory: 4G
+    memory_limit: 5G
+    max_players: 10
+    difficulty: normal
+    gamemode: survival
+    motd: "ho-lab survival"
+    use_aikar_flags: true
+    online_mode: true
+    # whitelist: "player1,player2"
+    # ops: "your_username"
+
+  - name: fabric
+    enabled: false
+    port: 25566
+    type: FABRIC
+    version: "1.21.1"
+    memory: 6G
+    memory_limit: 7G
+    max_players: 8
+    version_from_modrinth: true
+    modrinth_projects:
+      - fabric-api
+      - lithium
+      - ferrite-core
+
+  - name: modded
+    enabled: false
+    port: 25567
+    type: NEOFORGE
+    version: "1.21.1"
+    memory: 10G
+    memory_limit: 12G
+    max_players: 6
+    modrinth_projects: []  # add mod slugs from modrinth.com
 
 # Load secrets from vault (create from vault.yml.example)
 # vault_* variables are defined in group_vars/homelab/vault.yml

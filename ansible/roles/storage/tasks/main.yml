@@ -44,6 +44,7 @@
     - "{{ zfs_pool_name }}/photos"
     - "{{ zfs_pool_name }}/downloads"
     - "{{ zfs_pool_name }}/backups"
+    - "{{ zfs_pool_name }}/minecraft"
   register: zfs_create
   changed_when: zfs_create.rc == 0
   failed_when: zfs_create.rc != 0 and 'dataset already exists' not in zfs_create.stderr

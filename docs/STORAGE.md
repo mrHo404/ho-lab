@@ -43,6 +43,7 @@ sudo zfs create -o recordsize=1M     tank/media/tv
 sudo zfs create -o recordsize=128K   tank/photos
 sudo zfs create                      tank/downloads
 sudo zfs create -o recordsize=128K   tank/backups
+sudo zfs create -o recordsize=128K   tank/minecraft
 
 # Optional: cap downloads so torrents can't fill the pool
 sudo zfs set quota=2T tank/downloads

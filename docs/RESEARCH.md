@@ -18,6 +18,7 @@ Research conducted June 2026 for a Ryzen 3700X / 32 GB / 4×8 TB homelab targeti
 | Torrents | **Gluetun** + **qBittorrent** (`network_mode: service:gluetun`) |
 | VPN | **ProtonVPN WireGuard** (port forwarding) or **NordVPN OpenVPN** |
 | Monitoring | **Uptime Kuma** (availability) + **Prometheus/Grafana** (metrics) |
+| Minecraft | **itzg/docker-minecraft-server** — Fabric, NeoForge, Paper, vanilla, modpacks |
 | IaC | **Ansible** + `community.docker.docker_compose_v2` |
 
 ---
@@ -166,6 +167,24 @@ Reference implementations: [BenSuskins/homelab-ansible-plays](https://github.com
 
 ---
 
+## Minecraft servers
+
+**Recommendation:** [itzg/docker-minecraft-server](https://github.com/itzg/docker-minecraft-server) with `TYPE` env var for mod loader selection.
+
+| Goal | TYPE | Notes |
+|------|------|-------|
+| Pure survival | `VANILLA` | Simplest |
+| Plugins (EssentialsX, etc.) | `PAPER` | Not for mods |
+| Modern lightweight mods | `FABRIC` | + `MODRINTH_PROJECTS` |
+| Modern heavy modded | `NEOFORGE` | Replaces Forge for 1.20.2+ |
+| Full modpack | `AUTO_CURSEFORGE` | Needs CurseForge API key |
+
+Mods auto-download from Modrinth at container start. See [docs/MINECRAFT.md](MINECRAFT.md).
+
+**RAM on 32 GB box:** 4 GB vanilla/Paper, 6 GB Fabric, 8–10 GB NeoForge — only run one heavy modded server at a time alongside Jellyfin/Immich.
+
+---
+
 ## Network diagram (logical)
 
 ```
@@ -220,3 +239,5 @@ Reference implementations: [BenSuskins/homelab-ansible-plays](https://github.com
 - [Ansible Docker Compose Deploy](https://www.ansiblebyexample.com/articles/ansible-docker-compose-deploy-multi-container-apps)
 - [homelab-ansible-plays](https://github.com/BenSuskins/homelab-ansible-plays)
 - [ansible-homelab](https://github.com/n0one42/ansible-homelab)
+- [itzg/docker-minecraft-server](https://github.com/itzg/docker-minecraft-server)
+- [Modrinth mod support (itzg docs)](https://github.com/itzg/docker-minecraft-server/blob/master/docs/mods-and-plugins/modrinth.md)

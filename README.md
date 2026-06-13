@@ -9,6 +9,7 @@ Primary goals:
 - **Pi-hole** DNS ad blocking for the household
 - **qBittorrent** routed through **Gluetun** (ProtonVPN or NordVPN)
 - **Monitoring** via Uptime Kuma + Prometheus + Grafana
+- **Minecraft** servers (vanilla, Paper, Fabric, NeoForge) via [itzg/docker-minecraft-server](https://github.com/itzg/docker-minecraft-server)
 - Everything declared in Git and applied with Ansible
 
 ## Hardware
@@ -29,6 +30,7 @@ Primary goals:
 | [docs/STORAGE.md](docs/STORAGE.md) | ZFS vs MergerFS+SnapRAID decision |
 | [docs/HARDWARE.md](docs/HARDWARE.md) | Transcoding, GPU options, drive layout |
 | [docs/OS-OPTIONS.md](docs/OS-OPTIONS.md) | Debian vs Ubuntu vs Proxmox |
+| [docs/MINECRAFT.md](docs/MINECRAFT.md) | Mod loaders, server presets, RAM guide |
 
 ## Quick start
 
@@ -72,6 +74,7 @@ ansible-playbook -i inventory/hosts.yml playbooks/stack-network.yml    # Pi-hole
 ansible-playbook -i inventory/hosts.yml playbooks/stack-media.yml      # Jellyfin + Immich
 ansible-playbook -i inventory/hosts.yml playbooks/stack-downloads.yml  # Gluetun + qBittorrent
 ansible-playbook -i inventory/hosts.yml playbooks/stack-monitoring.yml # Uptime Kuma + Prometheus + Grafana
+ansible-playbook -i inventory/hosts.yml playbooks/stack-gaming.yml     # Minecraft servers
 ```
 
 ## Project layout

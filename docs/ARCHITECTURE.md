@@ -25,6 +25,7 @@
 | Grafana | `grafana/grafana:11.5.2` | 3000 | monitoring-net | `/opt/ho-lab/grafana` |
 | node_exporter | `prom/node-exporter:v1.9.0` | 9100 | host | — |
 | cAdvisor | `gcr.io/cadvisor/cadvisor:v0.51.0` | 8081 | host | — |
+| Minecraft | `itzg/minecraft-server:java21` | 25565+ | bridge | `/tank/minecraft/<name>` |
 
 ## Docker networks
 
@@ -48,7 +49,8 @@ bootstrap (common + docker)
             ├── jellyfin
             ├── immich
             ├── gluetun_qbittorrent
-            └── monitoring
+            ├── monitoring
+            └── minecraft
 ```
 
 ## Directory layout on server
@@ -60,7 +62,8 @@ bootstrap (common + docker)
 │   ├── immich/
 │   ├── pihole/
 │   ├── gluetun-qbittorrent/
-│   └── monitoring/
+│   ├── monitoring/
+│   └── minecraft/
 ├── pihole/                     # Pi-hole config persistence
 ├── immich/db/                  # PostgreSQL data
 ├── prometheus/
@@ -73,6 +76,7 @@ bootstrap (common + docker)
 │   └── tv/
 ├── photos/                     # Immich library
 ├── downloads/                  # qBittorrent
+├── minecraft/                  # Minecraft worlds + mods
 └── backups/
 ```
 
