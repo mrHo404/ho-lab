@@ -1,0 +1,7 @@
+---
+- name: Restart gluetun stack
+  community.docker.docker_compose_v2:
+    project_src: "{{ ho_lab_compose_root }}/gluetun-qbittorrent"
+    state: restarted
+    env_files:
+      - "{{ ho_lab_compose_root }}/gluetun-qbittorrent/.env"

@@ -1,0 +1,65 @@
+---
+- name: Create monitoring compose directory
+  ansible.builtin.file:
+    path: "{{ ho_lab_compose_root }}/monitoring"
+    state: directory
+    owner: "{{ ho_lab_uid }}"
+    group: "{{ ho_lab_gid }}"
+    mode: "0755"
+
+- name: Create monitoring data directories
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    owner: "{{ ho_lab_uid }}"
+    group: "{{ ho_lab_gid }}"
+    mode: "0755"
+  loop:
+    - "{{ ho_lab_root }}/prometheus"
+    - "{{ ho_lab_root }}/grafana"
+    - "{{ ho_lab_root }}/uptime-kuma"
+
+- name: Template Prometheus config
+  ansible.builtin.template:
+    src: prometheus.yml.j2
+    dest: "{{ ho_lab_root }}/prometheus/prometheus.yml"
+    owner: "{{ ho_lab_uid }}"
+    group: "{{ ho_lab_gid }}"
+    mode: "0644"
+  notify: Restart monitoring stack
+
+- name: Template monitoring docker-compose
+  ansible.builtin.template:
+    src: docker-compose.yml.j2
+    dest: "{{ ho_lab_compose_root }}/monitoring/docker-compose.yml"
+    owner: "{{ ho_lab_uid }}"
+    group: "{{ ho_lab_gid }}"
+    mode: "0644"
+  notify: Restart monitoring stack
+
+- name: Template Grafana .env
+  ansible.builtin.template:
+    src: grafana.env.j2
+    dest: "{{ ho_lab_compose_root }}/monitoring/.env"
+    owner: "{{ ho_lab_uid }}"
+    group: "{{ ho_lab_gid }}"
+    mode: "0600"
+  no_log: true
+
+- name: Deploy monitoring stack
+  community.docker.docker_compose_v2:
+    project_src: "{{ ho_lab_compose_root }}/monitoring"
+    state: present
+    pull: missing
+    env_files:
+      - "{{ ho_lab_compose_root }}/monitoring/.env"
+
+- name: Wait for Uptime Kuma
+  ansible.builtin.uri:
+    url: "http://127.0.0.1:{{ monitoring.uptime_kuma_port }}"
+    status_code: 200
+  register: kuma_health
+  retries: 12
+  delay: 5
+  until: kuma_health.status == 200
+  changed_when: false

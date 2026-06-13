@@ -1,0 +1,60 @@
+---
+- name: Create Immich compose directory
+  ansible.builtin.file:
+    path: "{{ ho_lab_compose_root }}/immich"
+    state: directory
+    owner: "{{ ho_lab_uid }}"
+    group: "{{ ho_lab_gid }}"
+    mode: "0755"
+
+- name: Create Immich library directory
+  ansible.builtin.file:
+    path: "{{ immich.library_path }}"
+    state: directory
+    owner: "{{ ho_lab_uid }}"
+    group: "{{ ho_lab_gid }}"
+    mode: "0755"
+
+- name: Create Immich database directory
+  ansible.builtin.file:
+    path: "{{ ho_lab_root }}/immich/db"
+    state: directory
+    owner: "{{ ho_lab_uid }}"
+    group: "{{ ho_lab_gid }}"
+    mode: "0755"
+
+- name: Template Immich docker-compose
+  ansible.builtin.template:
+    src: docker-compose.yml.j2
+    dest: "{{ ho_lab_compose_root }}/immich/docker-compose.yml"
+    owner: "{{ ho_lab_uid }}"
+    group: "{{ ho_lab_gid }}"
+    mode: "0644"
+  notify: Restart immich stack
+
+- name: Template Immich .env
+  ansible.builtin.template:
+    src: env.j2
+    dest: "{{ ho_lab_compose_root }}/immich/.env"
+    owner: "{{ ho_lab_uid }}"
+    group: "{{ ho_lab_gid }}"
+    mode: "0600"
+  no_log: true
+
+- name: Deploy Immich stack
+  community.docker.docker_compose_v2:
+    project_src: "{{ ho_lab_compose_root }}/immich"
+    state: present
+    pull: missing
+    env_files:
+      - "{{ ho_lab_compose_root }}/immich/.env"
+
+- name: Wait for Immich to respond
+  ansible.builtin.uri:
+    url: "http://127.0.0.1:{{ immich.port }}/api/server/ping"
+    status_code: 200
+  register: immich_health
+  retries: 24
+  delay: 10
+  until: immich_health.status == 200
+  changed_when: false

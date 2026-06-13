@@ -1,0 +1,7 @@
+---
+- name: Restart immich stack
+  community.docker.docker_compose_v2:
+    project_src: "{{ ho_lab_compose_root }}/immich"
+    state: restarted
+    env_files:
+      - "{{ ho_lab_compose_root }}/immich/.env"

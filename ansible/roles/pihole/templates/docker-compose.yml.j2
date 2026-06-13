@@ -1,0 +1,22 @@
+services:
+  pihole:
+    image: {{ images.pihole }}
+    container_name: pihole
+    restart: unless-stopped
+    network_mode: host
+    environment:
+      - TZ={{ ho_lab_timezone }}
+      - FTLCONF_webserver_api_password={{ vault_pihole_password }}
+      - FTLCONF_dns_listeningMode=all
+      - FTLCONF_dns_upstreams={{ pihole.upstream_dns | join(';') }}
+      - FTLCONF_local_domain={{ pihole.local_dns }}
+    volumes:
+      - {{ ho_lab_root }}/pihole/etc-pihole:/etc/pihole
+      - {{ ho_lab_root }}/pihole/etc-dnsmasq.d:/etc/dnsmasq.d
+    cap_add:
+      - NET_ADMIN
+    healthcheck:
+      test: ["CMD", "dig", "+short", "+norecurse", "+retry=0", "@127.0.0.1", "pi.hole"]
+      interval: 30s
+      timeout: 10s
+      retries: 3

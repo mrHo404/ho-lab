@@ -1,0 +1,5 @@
+---
+- name: Restart pihole stack
+  community.docker.docker_compose_v2:
+    project_src: "{{ ho_lab_compose_root }}/pihole"
+    state: restarted

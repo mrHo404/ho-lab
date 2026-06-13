@@ -1,0 +1,9 @@
+---
+# ZFS storage setup — DESTRUCTIVE. Requires storage_confirm_destroy: true
+- name: Configure ZFS storage pool
+  hosts: homelab
+  gather_facts: true
+
+  roles:
+    - role: storage
+      tags: [storage, zfs]

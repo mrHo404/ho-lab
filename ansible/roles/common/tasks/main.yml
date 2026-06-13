@@ -1,0 +1,49 @@
+---
+- name: Update apt cache
+  ansible.builtin.apt:
+    update_cache: true
+    cache_valid_time: 3600
+  when: ho_lab_os == 'debian' or ho_lab_os == 'ubuntu'
+
+- name: Install base packages
+  ansible.builtin.apt:
+    name:
+      - curl
+      - git
+      - vim
+      - htop
+      - smartmontools
+      - acl
+      - python3-pip
+      - ca-certificates
+      - gnupg
+    state: present
+
+- name: Create ho-lab group
+  ansible.builtin.group:
+    name: holab
+    gid: "{{ ho_lab_gid }}"
+    state: present
+
+- name: Create ho-lab user
+  ansible.builtin.user:
+    name: holab
+    uid: "{{ ho_lab_uid }}"
+    group: holab
+    shell: /bin/bash
+    create_home: true
+
+- name: Set timezone
+  ansible.builtin.command: timedatectl set-timezone {{ ho_lab_timezone }}
+  changed_when: false
+
+- name: Create ho-lab directory tree
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    owner: "{{ ho_lab_uid }}"
+    group: "{{ ho_lab_gid }}"
+    mode: "0755"
+  loop:
+    - "{{ ho_lab_root }}"
+    - "{{ ho_lab_compose_root }}"

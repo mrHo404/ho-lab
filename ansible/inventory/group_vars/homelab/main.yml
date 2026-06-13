@@ -1,0 +1,91 @@
+---
+# ho-lab global variables — safe to commit (no secrets)
+
+ho_lab_root: /opt/ho-lab
+ho_lab_compose_root: "{{ ho_lab_root }}/compose"
+ho_lab_uid: 1000
+ho_lab_gid: 1000
+ho_lab_timezone: Europe/Berlin  # CHANGE ME
+
+# OS target: debian | ubuntu
+ho_lab_os: debian
+
+# Storage — see docs/STORAGE.md before enabling
+storage_enabled: false
+storage_confirm_destroy: false
+zfs_pool_name: tank
+zfs_drives: []  # e.g. ["/dev/sdb", "/dev/sdc", "/dev/sdd", "/dev/sde"]
+
+# ZFS mount paths
+zfs_media_path: "/{{ zfs_pool_name }}/media"
+zfs_photos_path: "/{{ zfs_pool_name }}/photos"
+zfs_downloads_path: "/{{ zfs_pool_name }}/downloads"
+
+# --- Container image pins ---
+images:
+  jellyfin: "jellyfin/jellyfin:10.10.7"
+  immich_server: "ghcr.io/immich-app/immich-server:release"
+  immich_ml: "ghcr.io/immich-app/immich-machine-learning:release"
+  postgres: "tensorchord/pgvecto-rs:pg16-v0.3.0"
+  redis: "redis:7.4-alpine"
+  pihole: "pihole/pihole:2025.03.0"
+  gluetun: "qmcgaw/gluetun:v3.39.0"
+  qbittorrent: "lscr.io/linuxserver/qbittorrent:5.0.4"
+  uptime_kuma: "louislam/uptime-kuma:1.23.16"
+  prometheus: "prom/prometheus:v3.2.1"
+  grafana: "grafana/grafana:11.5.2"
+  node_exporter: "prom/node-exporter:v1.9.0"
+  cadvisor: "gcr.io/cadvisor/cadvisor:v0.51.0"
+
+# --- Feature flags ---
+services:
+  pihole: true
+  jellyfin: true
+  immich: true
+  gluetun_qbittorrent: true
+  monitoring: true
+
+# --- Pi-hole ---
+pihole:
+  web_port: 8080
+  dns_port: 53
+  upstream_dns:
+    - "1.1.1.1"
+    - "1.0.0.1"
+  local_dns: "holab.lan"
+
+# --- Jellyfin ---
+jellyfin:
+  port: 8096
+  published_url: "http://{{ ansible_host }}:8096"
+  hardware_accel: false  # set true after GPU installed
+  render_gid: 109
+  video_gid: 44
+
+# --- Immich ---
+immich:
+  port: 2283
+  library_path: "{{ zfs_photos_path }}"
+
+# --- Gluetun / qBittorrent ---
+vpn:
+  provider: protonvpn  # protonvpn | nordvpn
+  type: wireguard       # wireguard | openvpn
+  port_forwarding: true
+  server_countries: "Netherlands"
+
+gluetun:
+  qbittorrent_webui_port: 8080
+  qbittorrent_torrent_port: 6881
+  lan_subnets: "192.168.1.0/24"  # CHANGE ME
+
+# --- Monitoring ---
+monitoring:
+  grafana_port: 3000
+  prometheus_port: 9090
+  uptime_kuma_port: 3001
+  cadvisor_port: 8081
+  retention: 30d
+
+# Load secrets from vault (create from vault.yml.example)
+# vault_* variables are defined in group_vars/homelab/vault.yml

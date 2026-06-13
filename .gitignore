@@ -1,0 +1,32 @@
+# Ansible
+*.retry
+.vault_pass
+**/vault.yml
+**/secrets.yml
+
+# Environment / credentials
+.env
+.env.*
+!.env.example
+**/gluetun/
+**/pihole/etc-pihole/
+**/pihole/etc-dnsmasq.d/
+
+# Runtime data
+**/appdata/
+**/data/
+**/config/
+**/cache/
+**/downloads/
+**/upload/
+
+# OS / editor
+.DS_Store
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Python (ansible-lint venv)
+.venv/
+__pycache__/

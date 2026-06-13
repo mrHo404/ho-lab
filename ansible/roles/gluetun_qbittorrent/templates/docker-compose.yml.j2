@@ -1,0 +1,53 @@
+services:
+  gluetun:
+    image: {{ images.gluetun }}
+    container_name: gluetun
+    restart: unless-stopped
+    cap_add:
+      - NET_ADMIN
+    devices:
+      - /dev/net/tun:/dev/net/tun
+    ports:
+      - "{{ gluetun.qbittorrent_webui_port }}:8080/tcp"
+      - "{{ gluetun.qbittorrent_torrent_port }}:6881/tcp"
+      - "{{ gluetun.qbittorrent_torrent_port }}:6881/udp"
+    env_file:
+      - .env
+    environment:
+      - TZ={{ ho_lab_timezone }}
+      - VPN_SERVICE_PROVIDER={{ vpn.provider }}
+      - VPN_TYPE={{ vpn.type }}
+      - SERVER_COUNTRIES={{ vpn.server_countries }}
+{% if vpn.port_forwarding %}
+      - VPN_PORT_FORWARDING=on
+      - VPN_PORT_FORWARDING_PROVIDER={{ vpn.provider }}
+{% endif %}
+      - FIREWALL_OUTBOUND_SUBNETS={{ gluetun.lan_subnets }}
+      - DOT=on
+      - DOT_PROVIDERS=cloudflare
+      - HEALTH_VPN_DURATION_INITIAL=30s
+    volumes:
+      - {{ ho_lab_compose_root }}/gluetun-qbittorrent/gluetun:/gluetun
+    healthcheck:
+      test: ["CMD", "/gluetun-entrypoint", "healthcheck"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+
+  qbittorrent:
+    image: {{ images.qbittorrent }}
+    container_name: qbittorrent
+    restart: unless-stopped
+    network_mode: "service:gluetun"
+    depends_on:
+      gluetun:
+        condition: service_healthy
+    environment:
+      - PUID={{ ho_lab_uid }}
+      - PGID={{ ho_lab_gid }}
+      - TZ={{ ho_lab_timezone }}
+      - WEBUI_PORT=8080
+    volumes:
+      - {{ ho_lab_compose_root }}/gluetun-qbittorrent/qbittorrent:/config
+      - {{ zfs_downloads_path }}:/downloads

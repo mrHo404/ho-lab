@@ -1,0 +1,34 @@
+---
+- name: Create Jellyfin compose directory
+  ansible.builtin.file:
+    path: "{{ ho_lab_compose_root }}/jellyfin"
+    state: directory
+    owner: "{{ ho_lab_uid }}"
+    group: "{{ ho_lab_gid }}"
+    mode: "0755"
+
+- name: Template Jellyfin docker-compose
+  ansible.builtin.template:
+    src: docker-compose.yml.j2
+    dest: "{{ ho_lab_compose_root }}/jellyfin/docker-compose.yml"
+    owner: "{{ ho_lab_uid }}"
+    group: "{{ ho_lab_gid }}"
+    mode: "0644"
+  notify: Restart jellyfin stack
+
+- name: Deploy Jellyfin stack
+  community.docker.docker_compose_v2:
+    project_src: "{{ ho_lab_compose_root }}/jellyfin"
+    state: present
+    pull: missing
+  register: jellyfin_deploy
+
+- name: Wait for Jellyfin to respond
+  ansible.builtin.uri:
+    url: "http://127.0.0.1:{{ jellyfin.port }}/health"
+    status_code: 200
+  register: jellyfin_health
+  retries: 12
+  delay: 5
+  until: jellyfin_health.status == 200
+  changed_when: false

@@ -1,0 +1,6 @@
+---
+- name: Deploy VPN-protected download stack
+  hosts: homelab
+  roles:
+    - role: gluetun_qbittorrent
+      tags: [gluetun, qbittorrent]

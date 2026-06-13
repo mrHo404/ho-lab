@@ -1,0 +1,7 @@
+---
+- name: Restart monitoring stack
+  community.docker.docker_compose_v2:
+    project_src: "{{ ho_lab_compose_root }}/monitoring"
+    state: restarted
+    env_files:
+      - "{{ ho_lab_compose_root }}/monitoring/.env"

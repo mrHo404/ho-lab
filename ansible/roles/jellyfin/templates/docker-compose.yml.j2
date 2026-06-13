@@ -1,0 +1,33 @@
+services:
+  jellyfin:
+    image: {{ images.jellyfin }}
+    container_name: jellyfin
+    restart: unless-stopped
+    ports:
+      - "{{ jellyfin.port }}:8096/tcp"
+      - "7359:7359/udp"
+    environment:
+      - TZ={{ ho_lab_timezone }}
+      - JELLYFIN_PublishedServerUrl={{ jellyfin.published_url }}
+{% if jellyfin.hardware_accel %}
+      - ROC_ENABLE_PRE_VEGA=1
+{% endif %}
+    volumes:
+      - {{ ho_lab_compose_root }}/jellyfin/config:/config
+      - {{ ho_lab_compose_root }}/jellyfin/cache:/cache
+      - {{ zfs_media_path }}/movies:/media/movies:ro
+      - {{ zfs_media_path }}/tv:/media/tv:ro
+    user: "{{ ho_lab_uid }}:{{ ho_lab_gid }}"
+{% if jellyfin.hardware_accel %}
+    devices:
+      - /dev/dri:/dev/dri
+    group_add:
+      - "{{ jellyfin.render_gid }}"
+      - "{{ jellyfin.video_gid }}"
+{% endif %}
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8096/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s

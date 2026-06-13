@@ -1,0 +1,10 @@
+---
+- name: Deploy media stack
+  hosts: homelab
+  roles:
+    - role: jellyfin
+      when: services.jellyfin | default(false)
+      tags: [jellyfin]
+    - role: immich
+      when: services.immich | default(false)
+      tags: [immich]
