@@ -27,6 +27,8 @@ services:
       MAX_PLAYERS: "{{ mc.max_players | default(10) }}"
       MOTD: "{{ mc.motd | default('ho-lab ' ~ mc.name) }}"
       VIEW_DISTANCE: "{{ mc.view_distance | default(10) }}"
+      SIMULATION_DISTANCE: "{{ mc.simulation_distance | default(8) }}"
+      MAX_TICK_TIME: "{{ mc.max_tick_time | default(-1) }}"
       ONLINE_MODE: "{{ mc.online_mode | default(true) | string | lower }}"
       ENABLE_WHITELIST: "{{ mc.enforce_whitelist | default(false) | string | lower }}"
       REMOVE_OLD_MODS: "{{ mc.remove_old_mods | default(true) | string | lower }}"

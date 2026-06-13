@@ -3,9 +3,9 @@
   ansible.builtin.apt:
     update_cache: true
     cache_valid_time: 3600
-  when: ho_lab_os == 'debian' or ho_lab_os == 'ubuntu'
+  when: ho_lab_os in ['debian', 'ubuntu']
 
-- name: Install base packages
+- name: Install base packages (Debian/Ubuntu)
   ansible.builtin.apt:
     name:
       - curl
@@ -18,6 +18,21 @@
       - ca-certificates
       - gnupg
     state: present
+  when: ho_lab_os in ['debian', 'ubuntu']
+
+- name: Install base packages (Fedora)
+  ansible.builtin.dnf:
+    name:
+      - curl
+      - git
+      - vim
+      - htop
+      - smartmontools
+      - acl
+      - python3-pip
+      - ca-certificates
+    state: present
+  when: ho_lab_os == 'fedora'
 
 - name: Create ho-lab group
   ansible.builtin.group:

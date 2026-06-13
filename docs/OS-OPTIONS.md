@@ -1,95 +1,111 @@
 # OS Options
 
-You indicated Linux but haven't chosen a distribution. This document compares the three realistic paths for ho-lab.
+You indicated Linux but haven't chosen a distribution. This document compares realistic paths for ho-lab.
 
-## Comparison
+## Short answer: Fedora vs Ubuntu
 
-| | Debian 12 | Ubuntu 24.04 LTS | Proxmox VE |
-|---|-----------|------------------|------------|
-| **Stability** | Excellent | Excellent | Good (Debian-based) |
-| **Overhead** | Lowest | Low | Medium (hypervisor) |
-| **Docker support** | Native | Native | In VM or LXC |
-| **ZFS** | Manual install | Manual install | Built-in (for VMs) |
-| **Learning curve** | Low | Lowest | Medium–High |
-| **Best for** | Set-and-forget NAS | Familiar Ubuntu users | Multiple VMs later |
-| **Recommendation** | ⭐ **Default** | Good alternative | Overkill initially |
+**Yes — Fedora Server accomplishes the same job as Ubuntu** for this project. All services run in Docker; the host OS mainly provides the kernel, ZFS, and Docker engine. Ansible playbooks in ho-lab now support **Debian, Ubuntu, and Fedora**.
+
+The difference is **maintenance philosophy**, not capability:
+
+| | Ubuntu 24.04 LTS | Fedora Server 41+ |
+|---|------------------|-------------------|
+| **Support window** | ~5 years, one upgrade every few years | ~13 months, upgrade annually |
+| **Package freshness** | Stable/slightly older | Newer kernel, Java, drivers |
+| **Homelab docs** | Most tutorials assume Ubuntu/Debian | Fewer copy-paste guides |
+| **ZFS** | `zfsutils-linux` package | `zfs` package (OpenZFS) |
+| **Docker** | Official Docker CE repo | Official Docker CE repo |
+| **Best if you** | Want set-and-forget for years | Want latest hardware support, enjoy upgrading |
+
+For a NAS that should run quietly for 3–5 years without OS upgrades: **Debian 12** or **Ubuntu LTS**.
+
+For a lab box where you like staying current and already use Fedora elsewhere: **Fedora Server is a fine choice**.
+
+## Full comparison
+
+| | Debian 12 | Ubuntu 24.04 LTS | Fedora Server | Proxmox VE |
+|---|-----------|------------------|---------------|------------|
+| **Stability** | Excellent | Excellent | Good (fast releases) | Good |
+| **Overhead** | Lowest | Low | Low | Medium |
+| **Docker** | Native | Native | Native | In VM/LXC |
+| **ZFS** | Manual install | Manual install | `dnf install zfs` | Built-in |
+| **Support life** | ~2028 | ~2029 | ~13 months | Varies |
+| **Recommendation** | ⭐ NAS default | Familiar users | ⭐ Capable alternative | Overkill initially |
 
 ## Recommended: Debian 12 (Bookworm)
 
-**Why:** Minimal base install, excellent Docker and ZFS support, long support window (2028+), matches most homelab Ansible examples.
-
-### Install notes
+**Why:** Minimal base install, long support window, lowest overhead, most homelab Ansible examples target Debian/Ubuntu.
 
 ```bash
-# Minimal install — no desktop environment
-# Partition: separate SSD for OS, leave 4×8 TB untouched
-
-# Post-install
 sudo apt update && sudo apt upgrade -y
 sudo apt install -y curl git vim htop smartmontools zfsutils-linux
 ```
 
-### Enable ZFS
+## Ubuntu 24.04 LTS
+
+Functionally identical to Debian for ho-lab. Choose if you're already comfortable with Ubuntu.
 
 ```bash
-# Debian includes zfsutils-linux in contrib; ensure non-free-firmware repo enabled
-sudo apt install -y zfs-dkms zfsutils-linux
+sudo apt install -y zfsutils-linux
+# Docker installed by ansible playbooks/bootstrap.yml
 ```
 
-## Alternative: Ubuntu 24.04 LTS
+## Fedora Server
 
-Choose if you're already comfortable with Ubuntu. Functionally equivalent for this project.
+**Same end result as Ubuntu** — Docker Compose stacks, ZFS pool, Ansible deploys. Set `ho_lab_os: fedora` in group_vars.
+
+### Install notes
 
 ```bash
-sudo apt install -y zfsutils-linux docker.io docker-compose-v2
-# Prefer Docker's official repo over docker.io — bootstrap.yml handles this
+# Minimal Fedora Server install — separate SSD for OS
+sudo dnf upgrade -y
+sudo dnf install -y curl git vim htop smartmontools zfs
+sudo systemctl enable --now docker  # or let Ansible bootstrap handle it
 ```
 
-## Alternative: Proxmox VE
+### Fedora-specific considerations
 
-Choose if you plan to run **multiple isolated environments** (e.g., separate VM for torrents, LXC for Pi-hole).
+- **Upgrade yearly** — `dnf system-upgrade` or fresh install; plan downtime
+- **SELinux** — Docker volumes generally work; if a container can't write to `/tank`, check `ls -Z` and adjust contexts
+- **ZFS** — OpenZFS is well-supported; pool commands are identical to Linux/ZFS elsewhere
+- **Minecraft/Java** — Fedora's newer kernel helps; Java runs inside the container anyway (`java21` tag)
 
-### Pros
+### When Fedora makes sense
 
-- Snapshot VMs before upgrades
-- Run Pi-hole in LXC with minimal overhead
-- Isolate torrent VM from media stack
+- You already run Fedora on your desktop and want consistency
+- You want a newer kernel for recent NIC/storage drivers
+- You treat the homelab as a learning environment and don't mind annual OS upgrades
 
-### Cons
+### When to avoid Fedora
 
-- Extra complexity for a single-purpose NAS
-- ZFS on Proxmox consumes the 4×8 TB for VM storage — different mental model
-- Immich + Jellyfin in one LXC/VM still needs the same Docker Compose work
+- You want a NAS that runs untouched for years
+- You prefer maximum "it just works" copy-paste from homelab blogs (most assume Debian/Ubuntu)
 
-### When to revisit Proxmox
+## Proxmox VE
 
-- You add a second server
-- You want a dedicated "lab" VM for experiments
-- You need Windows VM for something
+Choose if you plan multiple isolated VMs. Overkill for a single Docker host running ho-lab stacks.
 
 ## Not recommended
 
 | OS | Why |
 |----|-----|
-| TrueNAS SCALE | Great NAS OS but fights Ansible-first workflow; ZFS management is GUI-driven |
-| Unraid | Proprietary, license cost, less Ansible-friendly |
-| OpenMediaVault | Fine NAS, but you'll fight it to run Gluetun sidecar pattern |
+| TrueNAS SCALE | GUI-driven ZFS fights Ansible-first workflow |
+| Unraid | Proprietary, less Ansible-friendly |
+| OpenMediaVault | Works, but Debian + Ansible is simpler |
 
 ## Decision
 
-Set your choice in `ansible/inventory/group_vars/homelab/main.yml`:
+Set in `ansible/inventory/group_vars/homelab/main.yml`:
 
 ```yaml
-# Options: debian, ubuntu, proxmox
-ho_lab_os: debian
+# Options: debian | ubuntu | fedora
+ho_lab_os: debian   # or ubuntu, or fedora
 ```
-
-The `common` role adjusts package names accordingly. Default playbooks target **Debian 12**.
 
 ## Post-OS install checklist
 
 - [ ] Static IP or DHCP reservation on router
 - [ ] SSH key auth enabled, password auth disabled
 - [ ] Hostname set (e.g., `holab`)
-- [ ] Time sync: `systemd-timesyncd` or `chrony`
-- [ ] Firewall: `ufw allow OpenSSH` only until services deployed
+- [ ] Time sync enabled (`chrony` on Fedora, `systemd-timesyncd` on Debian/Ubuntu)
+- [ ] Firewall: allow SSH only until services are deployed

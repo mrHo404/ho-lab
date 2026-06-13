@@ -7,7 +7,7 @@ ho_lab_uid: 1000
 ho_lab_gid: 1000
 ho_lab_timezone: Europe/Berlin  # CHANGE ME
 
-# OS target: debian | ubuntu
+# OS target: debian | ubuntu | fedora
 ho_lab_os: debian
 
 # Storage — see docs/STORAGE.md before enabling
@@ -97,10 +97,73 @@ minecraft:
 
 # Define one or more servers; set enabled: true to deploy
 minecraft_servers:
-  - name: survival
+  # RECOMMENDED: vanilla clients, server-side perf mods, great for redstone/farms
+  - name: vanilla-perf
     enabled: false
     port: 25565
-    type: PAPER           # VANILLA | PAPER | FABRIC | NEOFORGE | FORGE
+    type: FABRIC
+    version: LATEST
+    memory: 8G
+    memory_limit: 10G
+    max_players: 10
+    difficulty: normal
+    gamemode: survival
+    motd: "ho-lab · vanilla+perf"
+    use_aikar_flags: true
+    view_distance: 10
+    simulation_distance: 8
+    max_tick_time: -1
+    online_mode: true
+    version_from_modrinth: true
+    modrinth_projects:
+      - lithium              # game logic: physics, mob AI, block ticks — vanilla clients OK
+      - ferrite-core         # RAM reduction for large worlds
+      - c2me-fabric          # faster chunk IO — helps complex loaded areas
+      - clumps               # merges XP orbs — essential for mob farms
+      - server-core          # extra tick/entity optimizations
+    # whitelist: "player1,player2"
+    # ops: "your_username"
+
+  # Alternative: Paper fork — best raw TPS for redstone; tiny vanilla behavior diffs
+  - name: paper-perf
+    enabled: false
+    port: 25566
+    type: PURPUR
+    version: LATEST
+    memory: 8G
+    memory_limit: 10G
+    max_players: 10
+    difficulty: normal
+    gamemode: survival
+    motd: "ho-lab · paper perf"
+    use_aikar_flags: true
+    view_distance: 10
+    simulation_distance: 8
+    online_mode: true
+    extra_env:
+      PAPER_WATCHDOG__TIMEOUT: "120"
+
+  # Optional: add Create mod for mechanical complexity (clients need matching mods)
+  - name: create
+    enabled: false
+    port: 25567
+    type: FABRIC
+    version: "1.21.1"
+    memory: 10G
+    memory_limit: 12G
+    max_players: 6
+    version_from_modrinth: true
+    modrinth_projects:
+      - fabric-api
+      - create
+      - jei
+      - lithium
+      - ferrite-core
+
+  - name: survival
+    enabled: false
+    port: 25568
+    type: PAPER
     version: LATEST
     memory: 4G
     memory_limit: 5G
@@ -110,32 +173,16 @@ minecraft_servers:
     motd: "ho-lab survival"
     use_aikar_flags: true
     online_mode: true
-    # whitelist: "player1,player2"
-    # ops: "your_username"
-
-  - name: fabric
-    enabled: false
-    port: 25566
-    type: FABRIC
-    version: "1.21.1"
-    memory: 6G
-    memory_limit: 7G
-    max_players: 8
-    version_from_modrinth: true
-    modrinth_projects:
-      - fabric-api
-      - lithium
-      - ferrite-core
 
   - name: modded
     enabled: false
-    port: 25567
+    port: 25569
     type: NEOFORGE
     version: "1.21.1"
     memory: 10G
     memory_limit: 12G
     max_players: 6
-    modrinth_projects: []  # add mod slugs from modrinth.com
+    modrinth_projects: []
 
 # Load secrets from vault (create from vault.yml.example)
 # vault_* variables are defined in group_vars/homelab/vault.yml

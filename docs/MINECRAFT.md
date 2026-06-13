@@ -34,16 +34,94 @@ Alternatives considered:
 
 For new modded servers in 2026, default to **NeoForge** or **Fabric**. Use Forge only for legacy packs.
 
+## Performance-minded vanilla (recommended for ho-lab)
+
+**Goal:** Faithful vanilla survival, but handle complex redstone, mob farms, and loaded chunks without TPS death.
+
+### Pick your stack
+
+| Profile | ho-lab preset | Vanilla clients? | Best for |
+|---------|---------------|------------------|----------|
+| **Vanilla + perf mods** ⭐ | `vanilla-perf` | ✅ Yes — no client mods | Redstone, farms, faithful survival |
+| **Paper/Purpur tuning** | `paper-perf` | ✅ Yes | Maximum TPS; tiny redstone timing diffs vs Mojang |
+| **Create + automation** | `create` | ❌ Clients need mods | Mechanical complexity (gears, trains, contraptions) |
+| **Pure Mojang jar** | `TYPE: VANILLA` | ✅ Yes | Strictest vanilla; worst perf under load |
+
+### Recommended: `vanilla-perf` (Fabric + server-side mods)
+
+Uses **Fabric on the server only** with optimization mods that do not change gameplay. [Lithium](https://www.curseforge.com/minecraft/mc-mods/lithium) explicitly supports server-only install — **vanilla clients connect normally**.
+
+| Mod | What it fixes |
+|-----|---------------|
+| **Lithium** | Physics, mob AI, block ticking — often 50%+ tick time improvement |
+| **FerriteCore** | RAM usage for large worlds / many block states |
+| **C2ME** | Chunk loading/IO — helps when many chunks stay loaded (farms, machines) |
+| **Clumps** | XP orb merging — critical for mob farms |
+| **ServerCore** | Additional entity/tick optimizations |
+
+No Fabric API required for Lithium. Players join with unmodded Java Edition.
+
+Enable in `group_vars/homelab/main.yml`:
+
+```yaml
+services:
+  minecraft: true
+
+minecraft_servers:
+  - name: vanilla-perf
+    enabled: true
+    port: 25565
+    type: FABRIC
+    version: LATEST
+    memory: 8G
+    memory_limit: 10G
+    version_from_modrinth: true
+    modrinth_projects:
+      - lithium
+      - ferrite-core
+      - c2me-fabric
+      - clumps
+      - server-core
+```
+
+### Alternative: `paper-perf` (Purpur)
+
+[Purpur](https://purpurmc.org/) is a Paper fork with extra performance tuning knobs. Best raw TPS for heavy redstone, but Paper/Purpur can differ slightly from Mojang in edge-case redstone timing. Most survival players never notice.
+
+### Optional: Create mod (`create` preset)
+
+If by "complex machines" you mean **contraptions with gears, belts, and trains** (not just redstone), enable the `create` preset. Clients must install Fabric + Create + JEI. Keep this as a **second server** on port 25567 if you also want a vanilla-client-friendly survival world.
+
+### JVM and world tuning (already in ho-lab defaults)
+
+| Setting | Value | Why |
+|---------|-------|-----|
+| `USE_AIKAR_FLAGS` | `true` | Industry-standard G1GC tuning for MC |
+| `memory` | `8G` | Complex worlds need headroom beyond 4G |
+| `view_distance` | `10` | Balance visibility vs chunk load |
+| `simulation_distance` | `8` | Entities/ticks only simulate nearby — huge perf win |
+| `max_tick_time` | `-1` | Don't watchdog-kick on lag spikes during chunk gen |
+
+### Host-level upgrades (Ryzen 3700X box)
+
+These matter as much as mods when running farms + Jellyfin + Immich:
+
+1. **Allocate 8–10 GB** to Minecraft when other services are active
+2. **ZFS dataset** at `tank/minecraft` — snapshot before updates
+3. **Pre-generate world border** — avoids exploration lag spikes (`/worldborder fill` after setting size)
+4. **Don't run two heavy MC servers** simultaneously on 32 GB shared with Immich ML
+5. **Optional:** set CPU governor to `performance` during play sessions (`cpupower frequency-set -g performance`)
+
 ## RAM budget (32 GB homelab)
 
 Your box also runs Jellyfin, Immich, and monitoring. Don't over-allocate.
 
 | Server type | Suggested heap | Notes |
 |-------------|----------------|-------|
-| Vanilla / Paper (≤10 players) | 4 GB | `USE_AIKAR_FLAGS=true` |
-| Fabric (light mods) | 6 GB | Lithium + Ferrite Core help |
-| NeoForge (moderate modpack) | 8–10 GB | One modded server at a time |
-| Heavy modpack (100+ mods) | 12 GB+ | Consider dedicated host |
+| Pure vanilla | 4 GB | Struggles with complex farms |
+| **vanilla-perf / paper-perf** | **8 GB** | Recommended for redstone + machines |
+| Create / NeoForge | 10–12 GB | One modded server at a time |
+| Heavy modpack | 12 GB+ | Dedicated host |
 
 Set `memory` per server in `group_vars/homelab/main.yml`. JVM heap ≠ total RAM — add ~1 GB overhead.
 
@@ -58,12 +136,12 @@ services:
   minecraft: true
 
 minecraft_servers:
-  - name: survival
+  - name: vanilla-perf
     enabled: true
     port: 25565
-    type: PAPER          # vanilla: VANILLA, plugins: PAPER, mods: FABRIC or NEOFORGE
+    type: FABRIC
     version: LATEST
-    memory: 4G
+    memory: 8G
     max_players: 10
 ```
 
@@ -112,24 +190,25 @@ Minecraft Java Edition → Multiplayer → Add Server → `<server-ip>:25565`
 
 Drop plugin JARs in `/tank/minecraft/paper/plugins/` on the host.
 
-### Fabric with performance mods
+### Fabric with performance mods (vanilla clients OK)
 
 ```yaml
-- name: fabric
+- name: vanilla-perf
   enabled: true
-  port: 25567
+  port: 25565
   type: FABRIC
-  version: "1.21.1"
-  memory: 6G
+  version: LATEST
+  memory: 8G
   version_from_modrinth: true
   modrinth_projects:
-    - fabric-api
     - lithium
     - ferrite-core
-    - fabric-language-kotlin
+    - c2me-fabric
+    - clumps
+    - server-core
 ```
 
-Clients need **Fabric Loader + same mods** installed to join.
+**Vanilla clients join without installing anything.** Only add gameplay mods (Create, etc.) if you want clients to mod too.
 
 ### NeoForge modded
 

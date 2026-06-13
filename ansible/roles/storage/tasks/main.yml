@@ -12,12 +12,21 @@
     msg: "Set zfs_drives in group_vars/homelab/main.yml (e.g. ['/dev/sdb', ...])"
   when: zfs_drives | length == 0
 
-- name: Install ZFS utilities
+- name: Install ZFS utilities (Debian/Ubuntu)
   ansible.builtin.apt:
     name:
       - zfsutils-linux
       - zfs-dkms
     state: present
+  when: ho_lab_os in ['debian', 'ubuntu']
+
+- name: Install ZFS utilities (Fedora)
+  ansible.builtin.dnf:
+    name:
+      - zfs
+      - kernel-devel
+    state: present
+  when: ho_lab_os == 'fedora'
 
 - name: Check if pool already exists
   ansible.builtin.command: "zpool list {{ zfs_pool_name }}"
