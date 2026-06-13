@@ -10,7 +10,7 @@ Ansible-managed homelab (Ryzen 3700X / 32 GB / 4×8 TB). Layout and conventions 
 |------|---------|
 | [ARCHITECTURE.md](ARCHITECTURE.md) | Network, services, on-disk layout |
 | [README_CONVENTIONS.md](README_CONVENTIONS.md) | Playbook/role/tag conventions |
-| [docs/](docs/) | Storage, hardware, Minecraft, OS guides |
+| [docs/](docs/) | Storage, hardware, Minecraft, OS guides, [Fedora install](docs/FEDORA-INSTALL.md) |
 
 ## Setup
 
