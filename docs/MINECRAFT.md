@@ -61,7 +61,7 @@ Uses **Fabric on the server only** with optimization mods that do not change gam
 
 No Fabric API required for Lithium. Players join with unmodded Java Edition.
 
-Enable in `group_vars/homelab/main.yml`:
+Enable in `group_vars/homelab/vars.yml`:
 
 ```yaml
 services:
@@ -81,7 +81,7 @@ minecraft_servers:
       - ferrite-core
       - c2me-fabric
       - clumps
-      - server-core
+      - servercore
 ```
 
 ### Alternative: `paper-perf` (Purpur)
@@ -123,13 +123,13 @@ Your box also runs Jellyfin, Immich, and monitoring. Don't over-allocate.
 | Create / NeoForge | 10–12 GB | One modded server at a time |
 | Heavy modpack | 12 GB+ | Dedicated host |
 
-Set `memory` per server in `group_vars/homelab/main.yml`. JVM heap ≠ total RAM — add ~1 GB overhead.
+Set `memory` per server in `group_vars/homelab/vars.yml`. JVM heap ≠ total RAM — add ~1 GB overhead.
 
 ## Quick start
 
 ### 1. Enable a server in group_vars
 
-Edit `ansible/inventory/group_vars/homelab/main.yml`:
+Edit `group_vars/homelab/vars.yml`:
 
 ```yaml
 services:

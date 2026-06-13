@@ -1,6 +1,0 @@
----
-- name: Deploy Pi-hole
-  hosts: homelab
-  roles:
-    - role: pihole
-      tags: [pihole]

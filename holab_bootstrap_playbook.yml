@@ -1,0 +1,14 @@
+---
+# Bootstrap Docker host — Fedora Server by default
+
+- name: Bootstrap ho-lab host
+  hosts: homelab
+  tags:
+    - holab
+    - bootstrap
+  gather_facts: true
+  roles:
+    - role: common
+      tags: [common, bootstrap]
+    - role: docker
+      tags: [docker, bootstrap]

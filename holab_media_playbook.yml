@@ -1,0 +1,16 @@
+---
+# Jellyfin + Immich media stack
+
+- name: Deploy media stack
+  hosts: homelab
+  tags:
+    - holab
+    - media
+  gather_facts: true
+  roles:
+    - role: jellyfin
+      when: services.jellyfin | default(false)
+      tags: [jellyfin]
+    - role: immich
+      when: services.immich | default(false)
+      tags: [immich]

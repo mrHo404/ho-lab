@@ -1,9 +1,0 @@
----
-- name: Deploy Minecraft servers
-  hosts: homelab
-  gather_facts: true
-
-  roles:
-    - role: minecraft
-      when: services.minecraft | default(false)
-      tags: [minecraft, gaming]

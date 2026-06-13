@@ -1,105 +1,82 @@
 # ho-lab
 
-Ansible-managed homelab for a Ryzen 3700X / 32 GB RAM / 4×8 TB NAS build.
+Ansible-managed homelab (Ryzen 3700X / 32 GB / 4×8 TB). Layout and conventions follow the Pazz `configuration-ansible` project structure.
 
-Primary goals:
-
-- **Jellyfin** media server on the LAN
-- **Immich** phone photo/video backup (Google Photos replacement)
-- **Pi-hole** DNS ad blocking for the household
-- **qBittorrent** routed through **Gluetun** (ProtonVPN or NordVPN)
-- **Monitoring** via Uptime Kuma + Prometheus + Grafana
-- **Minecraft** servers (vanilla, Paper, Fabric, NeoForge) via [itzg/docker-minecraft-server](https://github.com/itzg/docker-minecraft-server)
-- Everything declared in Git and applied with Ansible
-
-## Hardware
-
-| Component | Spec |
-|-----------|------|
-| CPU | AMD Ryzen 7 3700X (8C/16T) |
-| RAM | 32 GB DDR4 |
-| Storage | 4× 8 TB HDD (32 TB raw) |
-| GPU | None built-in — see [docs/HARDWARE.md](docs/HARDWARE.md) |
+**Defaults:** Fedora Server · `vanilla-perf` Minecraft · Docker Compose stacks via Ansible.
 
 ## Documentation
 
-| Doc | Contents |
-|-----|----------|
-| [docs/RESEARCH.md](docs/RESEARCH.md) | Deep research summary with sources |
-| [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) | Service layout, networking, ports |
-| [docs/STORAGE.md](docs/STORAGE.md) | ZFS vs MergerFS+SnapRAID decision |
-| [docs/HARDWARE.md](docs/HARDWARE.md) | Transcoding, GPU options, drive layout |
-| [docs/OS-OPTIONS.md](docs/OS-OPTIONS.md) | Debian vs Ubuntu vs Proxmox |
-| [docs/MINECRAFT.md](docs/MINECRAFT.md) | Mod loaders, server presets, RAM guide |
+| File | Purpose |
+|------|---------|
+| [ARCHITECTURE.md](ARCHITECTURE.md) | Network, services, on-disk layout |
+| [README_CONVENTIONS.md](README_CONVENTIONS.md) | Playbook/role/tag conventions |
+| [docs/](docs/) | Storage, hardware, Minecraft, OS guides |
 
-## Quick start
-
-### 1. Prerequisites
-
-- Target host running Linux (Debian 12 or Ubuntu 24.04 recommended)
-- SSH access with sudo
-- Ansible 2.15+ on your control machine
+## Setup
 
 ```bash
-pip install ansible
-ansible-galaxy collection install -r ansible/requirements.yml
+./project_setup.sh
+cp inventory.ini.example inventory.ini
+cp group_vars/homelab/vault.yml.example group_vars/homelab/vault.yml
+# Edit inventory.ini and vault.yml
+ansible-vault encrypt group_vars/homelab/vault.yml
+echo 'your-passphrase' > vault_password.txt && chmod 600 vault_password.txt
 ```
 
-### 2. Configure inventory
+## Running playbooks
+
+Dry-run:
 
 ```bash
-cp ansible/inventory/group_vars/homelab.yml.example ansible/inventory/group_vars/homelab/vault.yml
-# Edit ansible/inventory/hosts.yml with your server IP
-# Fill in secrets (VPN creds, passwords) — encrypt with ansible-vault
+ansible-playbook holab_validate_playbook.yml --check
+ansible-playbook holab_site_playbook.yml --check
 ```
 
-### 3. Bootstrap the host
+Deploy:
 
 ```bash
-cd ansible
-ansible-playbook -i inventory/hosts.yml playbooks/bootstrap.yml
+ansible-playbook holab_validate_playbook.yml
+ansible-playbook holab_bootstrap_playbook.yml
+ansible-playbook holab_storage_playbook.yml   # optional — destructive
+ansible-playbook holab_site_playbook.yml
 ```
 
-### 4. Deploy stacks (in order)
+Per-stack playbooks (same naming as configuration-ansible):
+
+| Playbook | Stack |
+|----------|-------|
+| `holab_bootstrap_playbook.yml` | OS packages + Docker |
+| `holab_storage_playbook.yml` | ZFS RAIDZ1 |
+| `holab_pihole_playbook.yml` | Pi-hole |
+| `holab_media_playbook.yml` | Jellyfin + Immich |
+| `holab_downloads_playbook.yml` | Gluetun + qBittorrent |
+| `holab_monitoring_playbook.yml` | Uptime Kuma + Prometheus + Grafana |
+| `holab_minecraft_playbook.yml` | vanilla-perf Minecraft |
+| `holab_site_playbook.yml` | All stacks |
+
+Limit or tag (configuration-ansible style):
 
 ```bash
-ansible-playbook -i inventory/hosts.yml playbooks/storage.yml
-ansible-playbook -i inventory/hosts.yml playbooks/site.yml
+ansible-playbook holab_site_playbook.yml --limit holab --tags minecraft
+ansible-playbook holab_minecraft_playbook.yml --tags holab,minecraft
 ```
 
-Or deploy individual stacks:
-
-```bash
-ansible-playbook -i inventory/hosts.yml playbooks/stack-network.yml    # Pi-hole
-ansible-playbook -i inventory/hosts.yml playbooks/stack-media.yml      # Jellyfin + Immich
-ansible-playbook -i inventory/hosts.yml playbooks/stack-downloads.yml  # Gluetun + qBittorrent
-ansible-playbook -i inventory/hosts.yml playbooks/stack-monitoring.yml # Uptime Kuma + Prometheus + Grafana
-ansible-playbook -i inventory/hosts.yml playbooks/stack-gaming.yml     # Minecraft servers
-```
-
-## Project layout
+## Repository layout
 
 ```
 ho-lab/
-├── docs/                  # Architecture & research
-├── ansible/
-│   ├── inventory/         # Hosts and group variables
-│   ├── playbooks/         # Entry-point playbooks
-│   ├── roles/             # Reusable Ansible roles
-│   └── templates/         # Jinja2 compose & config templates
-└── compose/examples/      # Reference docker-compose files
+├── ansible.cfg
+├── inventory.ini              # local — copy from inventory.ini.example
+├── vault_password.txt         # local — gitignored
+├── holab_*_playbook.yml       # one playbook per stack
+├── group_vars/
+│   ├── all/utils.yml
+│   └── homelab/vars.yml
+├── host_vars/holab/vars.yml
+├── roles/
+├── docs/
+└── project_setup.sh
 ```
-
-## Recommended reading order
-
-1. [docs/OS-OPTIONS.md](docs/OS-OPTIONS.md) — pick your base OS
-2. [docs/STORAGE.md](docs/STORAGE.md) — plan the 4×8 TB layout before formatting
-3. [docs/HARDWARE.md](docs/HARDWARE.md) — budget for a GPU if you need transcoding
-4. [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) — understand networking before pointing DNS at Pi-hole
-
-## Status
-
-This is an **initial scaffold**. Storage layout, VPN credentials, and DNS cutover require manual decisions documented in `docs/`. Do not run `storage.yml` until you have read `docs/STORAGE.md` and chosen a layout.
 
 ## License
 

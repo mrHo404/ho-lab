@@ -1,0 +1,13 @@
+---
+# Pi-hole DNS ad blocking
+
+- name: Deploy Pi-hole
+  hosts: homelab
+  tags:
+    - holab
+    - pihole
+    - network
+  gather_facts: true
+  roles:
+    - role: pihole
+      when: services.pihole | default(false)

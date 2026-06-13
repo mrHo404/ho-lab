@@ -95,11 +95,11 @@ Choose if you plan multiple isolated VMs. Overkill for a single Docker host runn
 
 ## Decision
 
-Set in `ansible/inventory/group_vars/homelab/main.yml`:
+Set in `group_vars/homelab/vars.yml`:
 
 ```yaml
 # Options: debian | ubuntu | fedora
-ho_lab_os: debian   # or ubuntu, or fedora
+ho_lab_os: fedora
 ```
 
 ## Post-OS install checklist

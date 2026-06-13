@@ -1,0 +1,44 @@
+---
+# Full ho-lab deploy — imports stack playbooks in order
+
+- name: Ensure ho-lab directories exist
+  hosts: homelab
+  tags:
+    - holab
+    - always
+  gather_facts: true
+  tasks:
+    - name: Create ho-lab root directories
+      ansible.builtin.file:
+        path: "{{ item }}"
+        state: directory
+        owner: "{{ ho_lab_uid }}"
+        group: "{{ ho_lab_gid }}"
+        mode: "0755"
+      loop:
+        - "{{ ho_lab_root }}"
+        - "{{ ho_lab_compose_root }}"
+
+- ansible.builtin.import_playbook: holab_pihole_playbook.yml
+- ansible.builtin.import_playbook: holab_media_playbook.yml
+- ansible.builtin.import_playbook: holab_downloads_playbook.yml
+- ansible.builtin.import_playbook: holab_monitoring_playbook.yml
+- ansible.builtin.import_playbook: holab_minecraft_playbook.yml
+
+- name: Display service URLs
+  hosts: homelab
+  tags:
+    - holab
+    - always
+  gather_facts: false
+  tasks:
+    - name: Print endpoints
+      ansible.builtin.debug:
+        msg:
+          - "Jellyfin:     http://{{ ansible_host }}:{{ jellyfin.port }}"
+          - "Immich:       http://{{ ansible_host }}:{{ immich.port }}"
+          - "Pi-hole:      http://{{ ansible_host }}:{{ pihole.web_port }}/admin"
+          - "qBittorrent:  http://{{ ansible_host }}:{{ gluetun.qbittorrent_webui_port }}"
+          - "Uptime Kuma:  http://{{ ansible_host }}:{{ monitoring.uptime_kuma_port }}"
+          - "Grafana:      http://{{ ansible_host }}:{{ monitoring.grafana_port }}"
+          - "Minecraft:    {{ ansible_host }}:25565"

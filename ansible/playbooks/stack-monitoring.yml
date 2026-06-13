@@ -1,6 +1,0 @@
----
-- name: Deploy monitoring stack
-  hosts: homelab
-  roles:
-    - role: monitoring
-      tags: [monitoring]

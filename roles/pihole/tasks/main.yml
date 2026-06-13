@@ -1,0 +1,46 @@
+---
+- name: Create Pi-hole compose directory
+  ansible.builtin.file:
+    path: "{{ ho_lab_compose_root }}/pihole"
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+
+- name: Create Pi-hole config directories
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+  loop:
+    - "{{ ho_lab_root }}/pihole/etc-pihole"
+    - "{{ ho_lab_root }}/pihole/etc-dnsmasq.d"
+
+- name: Template Pi-hole docker-compose
+  ansible.builtin.template:
+    src: docker-compose.yml.j2
+    dest: "{{ ho_lab_compose_root }}/pihole/docker-compose.yml"
+    mode: "0644"
+  notify: Restart pihole stack
+
+- name: Deploy Pi-hole stack
+  community.docker.docker_compose_v2:
+    project_src: "{{ ho_lab_compose_root }}/pihole"
+    state: present
+    pull: missing
+
+- name: Verify Pi-hole blocks ads
+  ansible.builtin.command: "dig @127.0.0.1 doubleclick.net +short +time=2"
+  register: pihole_test
+  changed_when: false
+  retries: 6
+  delay: 10
+  until: pihole_test.stdout == "0.0.0.0"
+  failed_when: false
+
+- name: Warn if Pi-hole ad blocking check failed
+  ansible.builtin.debug:
+    msg: "Pi-hole deployed but ad-block verification did not return 0.0.0.0 — check container logs"
+  when: pihole_test.stdout != "0.0.0.0"

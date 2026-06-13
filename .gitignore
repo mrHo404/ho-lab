@@ -1,6 +1,8 @@
 # Ansible
 *.retry
 .vault_pass
+vault_password.txt
+inventory.ini
 **/vault.yml
 **/secrets.yml
 
@@ -12,7 +14,10 @@
 **/pihole/etc-pihole/
 **/pihole/etc-dnsmasq.d/
 
-# Runtime data
+# Runtime / local ansible
+.ansible/
+ansible/collections/
+ansible_env/
 **/appdata/
 **/data/
 **/config/
@@ -26,7 +31,5 @@
 .vscode/
 *.swp
 *.swo
-
-# Python (ansible-lint venv)
-.venv/
 __pycache__/
+.venv/

@@ -1,0 +1,14 @@
+---
+# Gluetun VPN + qBittorrent
+
+- name: Deploy download stack
+  hosts: homelab
+  tags:
+    - holab
+    - gluetun
+    - qbittorrent
+    - downloads
+  gather_facts: true
+  roles:
+    - role: gluetun_qbittorrent
+      when: services.gluetun_qbittorrent | default(false)

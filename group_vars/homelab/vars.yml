@@ -1,0 +1,113 @@
+---
+# Shared homelab variables — safe to commit (no secrets)
+
+ho_lab_root: /opt/ho-lab
+ho_lab_compose_root: "{{ ho_lab_root }}/compose"
+ho_lab_uid: 1000
+ho_lab_gid: 1000
+
+# OS target: debian | ubuntu | fedora
+ho_lab_os: fedora
+
+# Storage — see docs/STORAGE.md before enabling
+storage_enabled: false
+storage_confirm_destroy: false
+zfs_pool_name: tank
+zfs_drives: []
+
+zfs_media_path: "/{{ zfs_pool_name }}/media"
+zfs_photos_path: "/{{ zfs_pool_name }}/photos"
+zfs_downloads_path: "/{{ zfs_pool_name }}/downloads"
+zfs_minecraft_path: "/{{ zfs_pool_name }}/minecraft"
+local_data_root: "{{ ho_lab_root }}/data"
+
+images:
+  jellyfin: "jellyfin/jellyfin:10.10.7"
+  immich_server: "ghcr.io/immich-app/immich-server:release"
+  immich_ml: "ghcr.io/immich-app/immich-machine-learning:release"
+  postgres: "tensorchord/pgvecto-rs:pg16-v0.3.0"
+  redis: "redis:7.4-alpine"
+  pihole: "pihole/pihole:2025.03.0"
+  gluetun: "qmcgaw/gluetun:v3.39.0"
+  qbittorrent: "lscr.io/linuxserver/qbittorrent:5.0.4"
+  uptime_kuma: "louislam/uptime-kuma:1.23.16"
+  prometheus: "prom/prometheus:v3.2.1"
+  grafana: "grafana/grafana:11.5.2"
+  node_exporter: "prom/node-exporter:v1.9.0"
+  cadvisor: "gcr.io/cadvisor/cadvisor:v0.51.0"
+  minecraft: "itzg/minecraft-server:java21"
+
+services:
+  pihole: true
+  jellyfin: true
+  immich: true
+  gluetun_qbittorrent: true
+  monitoring: true
+  minecraft: true
+
+pihole:
+  web_port: 8080
+  dns_port: 53
+  upstream_dns:
+    - "1.1.1.1"
+    - "1.0.0.1"
+  local_dns: "{{ host_fqdn | regex_replace('^([^.]+).*', '\\1') }}.lan"
+
+jellyfin:
+  port: 8096
+  published_url: "http://{{ ansible_host }}:8096"
+  hardware_accel: false
+  render_gid: 109
+  video_gid: 44
+  media_movies: "{{ zfs_media_path + '/movies' if storage_enabled | default(false) else local_data_root + '/media/movies' }}"
+  media_tv: "{{ zfs_media_path + '/tv' if storage_enabled | default(false) else local_data_root + '/media/tv' }}"
+
+immich:
+  port: 2283
+  library_path: "{{ zfs_photos_path if storage_enabled | default(false) else local_data_root + '/photos' }}"
+
+vpn:
+  provider: protonvpn
+  type: wireguard
+  port_forwarding: true
+  server_countries: "Netherlands"
+
+gluetun:
+  qbittorrent_webui_port: 8080
+  qbittorrent_torrent_port: 6881
+  downloads_path: "{{ zfs_downloads_path if storage_enabled | default(false) else local_data_root + '/downloads' }}"
+
+monitoring:
+  grafana_port: 3000
+  prometheus_port: 9090
+  uptime_kuma_port: 3001
+  cadvisor_port: 8081
+  retention: 30d
+
+minecraft:
+  base_path: "{{ zfs_minecraft_path if storage_enabled | default(false) else local_data_root + '/minecraft' }}"
+
+minecraft_servers:
+  - name: vanilla-perf
+    enabled: true
+    port: 25565
+    type: FABRIC
+    version: LATEST
+    memory: 8G
+    memory_limit: 10G
+    max_players: 10
+    difficulty: normal
+    gamemode: survival
+    motd: "ho-lab · vanilla+perf"
+    use_aikar_flags: true
+    view_distance: 10
+    simulation_distance: 8
+    max_tick_time: -1
+    online_mode: true
+    version_from_modrinth: true
+    modrinth_projects:
+      - lithium
+      - ferrite-core
+      - c2me-fabric
+      - clumps
+      - servercore

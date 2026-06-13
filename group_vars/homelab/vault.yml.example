@@ -1,0 +1,15 @@
+---
+# Copy to group_vars/homelab/vault.yml and encrypt:
+# ansible-vault encrypt group_vars/homelab/vault.yml
+
+vault_pihole_password: "CHANGE_ME"
+vault_immich_db_password: "CHANGE_ME"
+vault_qbittorrent_webui_password: "CHANGE_ME"
+vault_protonvpn_wireguard_private_key: ""
+vault_protonvpn_wireguard_addresses: "10.2.0.2/32"
+vault_nordvpn_openvpn_user: ""
+vault_nordvpn_openvpn_password: ""
+vault_grafana_admin_password: "CHANGE_ME"
+vault_uptime_kuma_api_key: ""
+vault_minecraft_rcon_password: "CHANGE_ME"
+vault_curseforge_api_key: ""

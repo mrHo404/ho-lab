@@ -1,0 +1,11 @@
+---
+exclude_paths:
+  - .ansible
+  - ansible/collections
+  - ansible_env
+  - "**/*vault.yml"
+  - "**/*vault.yaml"
+  - "**/docker-compose*.yml"
+  - "**/docker-compose*.yaml"
+write_list:
+  - all

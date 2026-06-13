@@ -1,0 +1,13 @@
+---
+# Minecraft vanilla-perf (Fabric server-side performance mods)
+
+- name: Deploy Minecraft servers
+  hosts: homelab
+  tags:
+    - holab
+    - minecraft
+    - gaming
+  gather_facts: true
+  roles:
+    - role: minecraft
+      when: services.minecraft | default(false)

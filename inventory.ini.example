@@ -1,0 +1,9 @@
+# Copy to inventory.ini and set your server IP / SSH user
+holab ansible_host=192.168.1.10 ansible_user=admin host_fqdn=holab.lan
+
+[homelab]
+holab
+
+[homelab:vars]
+ansible_become=true
+ansible_python_interpreter=/usr/bin/python3

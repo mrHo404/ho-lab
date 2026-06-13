@@ -1,0 +1,15 @@
+---
+CR: "\r" # noqa: var-naming
+LF: "\n" # noqa: var-naming
+ansible_managed_with_git_info: |-
+  This file is managed by Ansible.
+
+  template: {{ lookup('ansible.builtin.pipe', 'git ls-files --full-name ' + (template_fullpath | quote)) | default(template_fullpath, true) }}
+  git info: {{
+    lookup(
+        'pipe',
+        'git log --format="%h %ad %ae" -1 --date=format:"%Y-%m-%d %H:%M" ' + (template_fullpath | quote)
+    )
+      | default('UNCOMMITTED', true)
+      + lookup('ansible.builtin.pipe', 'git diff --quiet ' + (template_fullpath | quote) + ' || echo " (modified)"')
+  }}

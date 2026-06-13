@@ -1,0 +1,56 @@
+---
+# Pre-deploy validation — vault, placeholders, storage warnings
+
+- name: Validate ho-lab configuration
+  hosts: homelab
+  tags:
+    - holab
+    - validate
+  gather_facts: false
+  tasks:
+    - name: Check vault.yml exists
+      ansible.builtin.stat:
+        path: "{{ playbook_dir }}/group_vars/homelab/vault.yml"
+      register: vault_file
+      delegate_to: localhost
+      become: false
+
+    - name: Fail if vault.yml is missing
+      ansible.builtin.fail:
+        msg: >
+          Create group_vars/homelab/vault.yml from vault.yml.example
+          and encrypt with ansible-vault before deploying.
+      when: not vault_file.stat.exists
+
+    - name: Reject placeholder Pi-hole password
+      ansible.builtin.assert:
+        that: vault_pihole_password not in ['', 'CHANGE_ME']
+        fail_msg: "Set vault_pihole_password in vault.yml"
+      when: services.pihole | default(false)
+
+    - name: Reject placeholder Grafana password
+      ansible.builtin.assert:
+        that: vault_grafana_admin_password not in ['', 'CHANGE_ME']
+        fail_msg: "Set vault_grafana_admin_password in vault.yml"
+      when: services.monitoring | default(false)
+
+    - name: Reject placeholder Immich DB password
+      ansible.builtin.assert:
+        that: vault_immich_db_password not in ['', 'CHANGE_ME']
+        fail_msg: "Set vault_immich_db_password in vault.yml"
+      when: services.immich | default(false)
+
+    - name: Require ProtonVPN key when Gluetun enabled
+      ansible.builtin.assert:
+        that: vault_protonvpn_wireguard_private_key | length > 0
+        fail_msg: "Set vault_protonvpn_wireguard_private_key in vault.yml"
+      when:
+        - services.gluetun_qbittorrent | default(false)
+        - vpn.provider == 'protonvpn'
+
+    - name: Note Minecraft data path before ZFS
+      ansible.builtin.debug:
+        msg: "Minecraft worlds at {{ minecraft.base_path }} until storage is configured."
+      when:
+        - services.minecraft | default(false)
+        - not storage_enabled | default(false)
